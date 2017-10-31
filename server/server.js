@@ -39,11 +39,29 @@ app.post('/campgrounds', function(req, res){
   //get data from form
   var name = req.body.name;
   var image = req.body.image;
-  var newCampground = {name: name, image: image};
-  //add to campgrounds array
-  campgrounds.push(newCampground);
-  //redirect back to campgrounds page
-  res.redirect('/campgrounds');
+  //add to campgrounds DB
+  pool.connect(function(errConnectingToDatabase, db, done){
+    if(errConnectingToDatabase) {
+      console.log('There was an error connecting to database: ', errConnectingToDatabase);
+      res.sendStatus(500);
+    } else {
+      // MAKE DB QUERY
+      db.query("insert into campsites(name, image) values($1, $2);", [name, image],
+      function(errMakingQuery, result){
+        done();
+        if(errMakingQuery){
+          console.log('There was an error making INSERT query: ', errMakingQuery);
+          res.sendStatus(500);
+        } else {
+          console.log('Campsite added');
+          //res.sendStatus(200);
+          //redirect back to campgrounds page
+          res.redirect('/campgrounds');
+        }
+      });
+    } // end of else
+  }); //end of pool.connect
+
 });
 
 app.get('/campgrounds/new', function(req, res){
