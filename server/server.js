@@ -2,6 +2,7 @@ var express = require("express");
 var app = express();
 var path = require("path");
 var bodyParser = require("body-parser");
+var pool = require('./modules/pool.js');
 
 var port = process.env.PORT || 5000;
 
@@ -9,18 +10,30 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, './public/views'));
 
-var campgrounds = [
-  {name: "Salmon Creek", image: "https://farm3.staticflickr.com/2259/2182093741_164dc44a24.jpg"},
-  {name: "Redwood Falls", image: "https://farm4.staticflickr.com/3270/2617191414_c5d8a25a94.jpg"},
-  {name: "Chase River Woods", image: "https://farm5.staticflickr.com/4027/4368764673_c8345bd602.jpg"},
-  {name: "Rice Lake", image: "https://farm2.staticflickr.com/1363/1342367857_2fd12531e7.jpg"},
-  {name: "Granite Hills", image: "https://farm4.staticflickr.com/3290/3753652230_8139b7c717.jpg"},
-];
-
 app.get('/campgrounds', function(req, res){
   console.log("Retrieving campgrounds");
-  res.render("campgrounds", {campgrounds: campgrounds}); //second variable is data object passed to client side
-});
+  //Get campgrounds from the DB
+  pool.connect(function(errConnectingToDatabase, db, done){
+    if(errConnectingToDatabase) {
+      console.log('There was an error connecting to database: ', errConnectingToDatabase);
+      res.sendStatus(500);
+    } else {
+      // MAKE DB QUERY
+      db.query('SELECT name, image FROM campsites;',
+      function(errMakingQuery, result){
+        done();
+        if(errMakingQuery){
+          console.log('There was an error making INSERT query: ', errMakingQuery);
+          res.sendStatus(500);
+        } else {
+          //console.log('Retrieved client data from DB: ', result);
+          res.render("campgrounds", {campgrounds: result.rows}); //second variable is data object passed to client side
+        }
+      });
+    } // end of else
+  }); //end of pool.connect
+}); //end of get request
+
 
 app.post('/campgrounds', function(req, res){
   //get data from form
