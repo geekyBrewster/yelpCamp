@@ -1,0 +1,23 @@
+<% include partials/header %>
+<div class="container">
+
+  <div class="row">
+  <% campsite.forEach(function(campsite){ %>
+    <h1><%= campsite.name %></h1>
+    <div class="col-md-3 col-sm-6">
+      <div class="thumbnail">
+        <img src="<%= campsite.image %>" alt="Campsite image">
+        <div class="caption">
+          <p> <%= campsite.description %>  </p>
+        </div>
+      </div>
+    </div>
+  <% }) %>
+  </div>
+  <div class="row">
+    <a href="/campgrounds">View all Campgrounds</a>
+  </div>
+
+
+</div>
+<% include partials/footer %>
