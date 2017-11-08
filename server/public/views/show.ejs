@@ -15,7 +15,7 @@
       <div class="caption">
         <ul>
           <% comments.forEach(function(comment){ %>
-            <li><%= comment.comment %></li>
+            <li><strong><%= comment.author %></strong> -- <%= comment.comment %></li>
           <% }) %>
         </ul>
       </div>

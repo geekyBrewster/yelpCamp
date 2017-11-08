@@ -15,6 +15,7 @@ CREATE TABLE "users" (
 CREATE TABLE "comments" (
   "id" serial primary key,
   "campsite_id" int references "campsites",
+  "author" varchar(120) null,
   "comment" varchar(500) null
 );
 
@@ -39,9 +40,11 @@ INSERT INTO "campsites" ("name", "image", "description")
 VALUES ('Granite Hills', 'https://farm4.staticflickr.com/3290/3753652230_8139b7c717.jpg',
 'Modern amenities. Wood available for purchase at ranger station. Nearby lake with water access.');
 
-INSERT INTO "comments" ("campsite_id", "comment")
-VALUES (1, 'Nice trout fishing here.'),
-(2, 'Water pumps near the primitive sites are decent.'),
-(3, 'Hiking is good but bring mosquito spray. Lots.'),
-(4, 'Nice and quiet campsite. Highly recommended.'),
-(5, 'Bring the boat for the lake. It''s nice.');
+INSERT INTO "comments" ("campsite_id", "author", "comment")
+VALUES (1, 'Homer', 'Nice trout fishing here.'),
+(2, 'Joe', 'Water pumps near the primitive sites are decent.'),
+(3, 'Martha', 'Hiking is good but bring mosquito spray. Lots.'),
+(4, 'Homer', 'Nice and quiet campsite. Highly recommended.'),
+(5, 'Martha', 'Bring the boat for the lake. It''s nice.'),
+(1, 'Joe', 'It gets pretty crowded during July. Offseason is best.'),
+(3, 'Hannah', 'Don''t stay near the trailer park. It gets loud.');

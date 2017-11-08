@@ -8,7 +8,7 @@ var port = process.env.PORT || 5000;
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static(path.join(__dirname, 'public')));
-app.set('views', path.join(__dirname, './public/views'));
+app.set('views', path.join(__dirname, './public/views/'));
 app.set('view engine', 'ejs');
 
 // INDEX ROUTE
@@ -29,7 +29,7 @@ app.get('/campgrounds', function(req, res){
           res.sendStatus(500);
         } else {
           console.log('Retrieved campground data from DB: ', result.rows);
-          res.render("index", {campgrounds: result.rows}); //second variable is data object passed to client side
+          res.render("index.ejs", {campgrounds: result.rows}); //second variable is data object passed to client side
         }
       });
     } // end of else
@@ -67,7 +67,7 @@ app.post('/campgrounds', function(req, res){
 
 // NEW ROUTE
 app.get('/campgrounds/new', function(req, res){
-  res.render('new.ejs');
+  res.render('newCampground.ejs');
 });
 
 // SHOW ROUTE
@@ -95,7 +95,7 @@ app.get('/campgrounds/:id', function(req, res){
           console.log('Campsite selected: ', campground);
 
           // Make DB query for campsite's comments
-          db.query('select "campsites"."id" as "campsite_id", "comments"."comment" from "campsites" join "comments" ' +
+          db.query('select "campsites"."id" as "campsite_id", "comments"."author", "comments"."comment" from "campsites" join "comments" ' +
           'on "campsites"."id" = "comments"."campsite_id" where "campsites"."id" = $1;', [req.params.id],
           function(errMakingQuery, result){
             done();
@@ -107,16 +107,75 @@ app.get('/campgrounds/:id', function(req, res){
               console.log('Campsite\'s comments selected: ', comments);
 
               //Render template to display that campgrond's info
-              res.render("show", {campsite: campground, comments: comments});
+              res.render("show.ejs", {campsite: campground, comments: comments});
             }
           });
-
-
         }
       });
     } // end of else
   }); //end of pool.connect
 }); //end of GET single campsite
+
+// --- COMMENT ROUTES --- //
+
+// NEW route for comments
+app.get('/campgrounds/:id/comments/new', function(req,res){
+  // Find campground by id
+
+    pool.connect(function(errConnectingToDatabase, db, done){
+      if(errConnectingToDatabase) {
+        console.log('There was an error connecting to database: ', errConnectingToDatabase);
+        res.sendStatus(500);
+      } else {
+        // MAKE DB QUERY for Campsite
+        db.query('select "campsites"."id", "campsites"."name", "campsites"."image",'+
+        '"campsites"."description" from "campsites" where "campsites"."id" = $1;', [req.params.id],
+        function(errMakingQuery, result){
+          done();
+          if(errMakingQuery){
+            console.log('There was an error making INSERT query: ', errMakingQuery);
+            res.sendStatus(500);
+          } else {
+            console.log('Campsite selected: ', result.rows);
+
+            // Render new comment form
+            res.render('newComment.ejs', {campground: result.rows});
+          }
+        });
+      } // end of else
+    }); //end of pool.connect
+  }); //end of GET single campsite
+
+//CREATE route for comments
+app.post('/campgrounds/:id/comments', function(req, res){
+  //get data from form
+  var name = req.body.name;
+  var image = req.body.image;
+  var desc = req.body.description;
+  //add to campgrounds DB
+  pool.connect(function(errConnectingToDatabase, db, done){
+    if(errConnectingToDatabase) {
+      console.log('There was an error connecting to database: ', errConnectingToDatabase);
+      res.sendStatus(500);
+    } else {
+      // MAKE DB QUERY
+      db.query("insert into campsites(name, image, description) values($1, $2, $3);", [name, image, desc],
+      function(errMakingQuery, result){
+        done();
+        if(errMakingQuery){
+          console.log('There was an error making INSERT query: ', errMakingQuery);
+          res.sendStatus(500);
+        } else {
+          console.log('Campsite added');
+          //redirect back to campgrounds page
+          res.redirect('/campgrounds');
+        }
+      });
+    } // end of else
+  }); //end of pool.connect
+}); //end of POST route
+
+
 
 // Catch all route //
 app.get('/', function(req, res) {
