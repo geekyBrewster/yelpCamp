@@ -11,9 +11,19 @@
           <p> <%= campsite.description %>  </p>
         </div>
       </div>
+
+      <div class="caption">
+        <ul>
+          <% comments.forEach(function(comment){ %>
+            <li><%= comment.comment %></li>
+          <% }) %>
+        </ul>
+      </div>
+
     </div>
   <% }) %>
   </div>
+  <hr>
   <div class="row">
     <a href="/campgrounds">View all Campgrounds</a>
   </div>

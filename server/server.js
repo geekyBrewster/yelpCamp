@@ -72,6 +72,8 @@ app.get('/campgrounds/new', function(req, res){
 
 // SHOW ROUTE
 app.get('/campgrounds/:id', function(req, res){
+  var campground = [];
+  var comments = [];
   //Find campground with matching id
   var campsiteID = req.params.id;
   //find campsite in DB
@@ -80,20 +82,36 @@ app.get('/campgrounds/:id', function(req, res){
       console.log('There was an error connecting to database: ', errConnectingToDatabase);
       res.sendStatus(500);
     } else {
-      // MAKE DB QUERY
-      db.query('select "campsites"."id" as "campsite_id", "campsites"."name", "campsites"."image",'+
-      '"campsites"."description", "comments"."comment" from "campsites" join "comments" ' +
-      'on "campsites"."id" = "comments"."campsite_id" where "campsites"."id" = $1;', [req.params.id],
+      // MAKE DB QUERY for Campsite
+      db.query('select "campsites"."id", "campsites"."name", "campsites"."image",'+
+      '"campsites"."description" from "campsites" where "campsites"."id" = $1;', [req.params.id],
       function(errMakingQuery, result){
         done();
         if(errMakingQuery){
           console.log('There was an error making INSERT query: ', errMakingQuery);
           res.sendStatus(500);
         } else {
-          console.log('Campsite added');
-          //Render template to display that campgrond's info
-          console.log('Retrieved campsite data from DB: ', result.rows);
-          res.render("show", {campsite: result.rows});
+          campground = result.rows;
+          console.log('Campsite selected: ', campground);
+
+          // Make DB query for campsite's comments
+          db.query('select "campsites"."id" as "campsite_id", "comments"."comment" from "campsites" join "comments" ' +
+          'on "campsites"."id" = "comments"."campsite_id" where "campsites"."id" = $1;', [req.params.id],
+          function(errMakingQuery, result){
+            done();
+            if(errMakingQuery){
+              console.log('There was an error making INSERT query: ', errMakingQuery);
+              res.sendStatus(500);
+            } else {
+              comments = result.rows;
+              console.log('Campsite\'s comments selected: ', comments);
+
+              //Render template to display that campgrond's info
+              res.render("show", {campsite: campground, comments: comments});
+            }
+          });
+
+
         }
       });
     } // end of else
