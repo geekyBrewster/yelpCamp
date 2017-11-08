@@ -11,6 +11,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, './public/views'));
 app.set('view engine', 'ejs');
 
+// INDEX ROUTE
 app.get('/campgrounds', function(req, res){
   console.log("Retrieving campgrounds");
   //Get campgrounds from the DB
@@ -33,9 +34,9 @@ app.get('/campgrounds', function(req, res){
       });
     } // end of else
   }); //end of pool.connect
-}); //end of get request
+}); //end of GET request
 
-
+// CREATE ROUTE
 app.post('/campgrounds', function(req, res){
   //get data from form
   var name = req.body.name;
@@ -64,10 +65,12 @@ app.post('/campgrounds', function(req, res){
   }); //end of pool.connect
 }); //end of POST route
 
+// NEW ROUTE
 app.get('/campgrounds/new', function(req, res){
   res.render('new.ejs');
 });
 
+// SHOW ROUTE
 app.get('/campgrounds/:id', function(req, res){
   //Find campground with matching id
   var campsiteID = req.params.id;
@@ -78,7 +81,9 @@ app.get('/campgrounds/:id', function(req, res){
       res.sendStatus(500);
     } else {
       // MAKE DB QUERY
-      db.query("select * from campsites where id=$1;", [campsiteID],
+      db.query('select "campsites"."id" as "campsite_id", "campsites"."name", "campsites"."image",'+
+      '"campsites"."description", "comments"."comment" from "campsites" join "comments" ' +
+      'on "campsites"."id" = "comments"."campsite_id" where "campsites"."id" = $1;', [req.params.id],
       function(errMakingQuery, result){
         done();
         if(errMakingQuery){
@@ -95,6 +100,7 @@ app.get('/campgrounds/:id', function(req, res){
   }); //end of pool.connect
 }); //end of GET single campsite
 
+// Catch all route //
 app.get('/', function(req, res) {
   console.log('request for landing page');
   res.render("landing");
