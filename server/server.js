@@ -13,7 +13,7 @@ app.set('view engine', 'ejs');
 
 // INDEX ROUTE
 app.get('/campgrounds', function(req, res){
-  console.log("Retrieving campgrounds");
+  console.log("Retrieving campgrounds.");
   //Get campgrounds from the DB
   pool.connect(function(errConnectingToDatabase, db, done){
     if(errConnectingToDatabase) {
@@ -25,16 +25,16 @@ app.get('/campgrounds', function(req, res){
       function(errMakingQuery, result){
         done();
         if(errMakingQuery){
-          console.log('There was an error making INSERT query: ', errMakingQuery);
+          console.log('There was an error making SELECT query in index route: ', errMakingQuery);
           res.sendStatus(500);
         } else {
-          console.log('Retrieved campground data from DB: ', result.rows);
+          //console.log('Retrieved campground data from DB: ', result.rows);
           res.render("index.ejs", {campgrounds: result.rows}); //second variable is data object passed to client side
         }
       });
     } // end of else
   }); //end of pool.connect
-}); //end of GET request
+}); //end of INDEX route
 
 // CREATE ROUTE
 app.post('/campgrounds', function(req, res){
@@ -53,17 +53,17 @@ app.post('/campgrounds', function(req, res){
       function(errMakingQuery, result){
         done();
         if(errMakingQuery){
-          console.log('There was an error making INSERT query: ', errMakingQuery);
+          console.log('There was an error making INSERT query to add campground: ', errMakingQuery);
           res.sendStatus(500);
         } else {
-          console.log('Campsite added');
+          console.log('Campground added');
           //redirect back to campgrounds page
           res.redirect('/campgrounds');
         }
       });
     } // end of else
   }); //end of pool.connect
-}); //end of POST route
+}); //end of CREATE route
 
 // NEW ROUTE
 app.get('/campgrounds/new', function(req, res){
@@ -74,9 +74,9 @@ app.get('/campgrounds/new', function(req, res){
 app.get('/campgrounds/:id', function(req, res){
   var campground = [];
   var comments = [];
-  //Find campground with matching id
   var campsiteID = req.params.id;
-  //find campsite in DB
+
+  //find campsite with matching id in DB
   pool.connect(function(errConnectingToDatabase, db, done){
     if(errConnectingToDatabase) {
       console.log('There was an error connecting to database: ', errConnectingToDatabase);
@@ -88,11 +88,12 @@ app.get('/campgrounds/:id', function(req, res){
       function(errMakingQuery, result){
         done();
         if(errMakingQuery){
-          console.log('There was an error making INSERT query: ', errMakingQuery);
+          console.log('There was an error making SELECT query to find single campsite: ', errMakingQuery);
           res.sendStatus(500);
         } else {
           campground = result.rows;
-          console.log('Campsite selected: ', campground);
+          console.log('Campsite found.');
+          //console.log('Campsite selected: ', campground);
 
           // Make DB query for campsite's comments
           db.query('select "campsites"."id" as "campsite_id", "comments"."author", "comments"."comment" from "campsites" join "comments" ' +
@@ -100,11 +101,12 @@ app.get('/campgrounds/:id', function(req, res){
           function(errMakingQuery, result){
             done();
             if(errMakingQuery){
-              console.log('There was an error making INSERT query: ', errMakingQuery);
+              console.log('There was an error making SELECT query to find comments: ', errMakingQuery);
               res.sendStatus(500);
             } else {
+              console.log('Comments found.');
               comments = result.rows;
-              console.log('Campsite\'s comments selected: ', comments);
+              //console.log('Campsite\'s comments selected: ', comments);
 
               //Render template to display that campgrond's info
               res.render("show.ejs", {campsite: campground, comments: comments});
@@ -114,7 +116,7 @@ app.get('/campgrounds/:id', function(req, res){
       });
     } // end of else
   }); //end of pool.connect
-}); //end of GET single campsite
+}); //end of SHOW route
 
 // --- COMMENT ROUTES --- //
 
@@ -135,7 +137,7 @@ app.get('/campgrounds/:id/comments/new', function(req,res){
             console.log('There was an error making SELECT query: ', errMakingQuery);
             res.sendStatus(500);
           } else {
-            console.log('Campsite selected: ', result.rows);
+            console.log('Valid campsite found. Loading details.');
 
             // Render new comment form
             res.render('newComment.ejs', {campground: result.rows});
@@ -143,7 +145,7 @@ app.get('/campgrounds/:id/comments/new', function(req,res){
         });
       } // end of else
     }); //end of pool.connect
-  }); //end of GET single campsite
+  }); //end of NEW route for comments
 
 //CREATE route for comments
 app.post('/campgrounds/:id/comments', function(req, res){
@@ -153,18 +155,17 @@ app.post('/campgrounds/:id/comments', function(req, res){
       console.log('There was an error connecting to database: ', errConnectingToDatabase);
       res.sendStatus(500);
     } else {
-      // MAKE DB QUERY for Campsite
+      // Verify Campground is in DB
       db.query('select * from "campsites" where "campsites"."id" = $1;', [req.params.id],
       function(errMakingQuery, result){
         done();
         if(errMakingQuery){
-          console.log('There was an error making SELECT query: ', errMakingQuery);
+          console.log('There was an error making SELECT query to verify campground: ', errMakingQuery);
           res.sendStatus(500);
         } else {
-          console.log('Campsite found.');
+          console.log('Valid campsite found. Adding comment.');
 
           //Add Comment to Comments Table in DB
-          //get data from form
           var comment = req.body.comment;
           var author = req.body.author;
 
@@ -174,15 +175,15 @@ app.post('/campgrounds/:id/comments', function(req, res){
               console.log('There was an error connecting to database: ', errConnectingToDatabase);
               res.sendStatus(500);
             } else {
-              // MAKE DB QUERY
+              // MAKE DB QUERY to Add Comment
               db.query("insert into comments(campsite_id, author, comment) values($1, $2, $3);", [req.params.id, author, comment],
               function(errMakingQuery, result){
                 done();
                 if(errMakingQuery){
-                  console.log('There was an error making INSERT query: ', errMakingQuery);
+                  console.log('There was an error making INSERT query to add comment: ', errMakingQuery);
                   res.sendStatus(500);
                 } else {
-                  console.log('Campsite added');
+                  console.log('Campsite comment added');
                   //redirect back to campgrounds page
                   res.redirect('/campgrounds');
                 }
